@@ -59,8 +59,38 @@ USE $DB;
 SHOW TABLES;"
 mysql -u$USER -p$PASS -D$DB -e "$SQL1" > "$TABLES_LIST"
 tail -n +2 "$TABLES_LIST" > "$TABLES_LIST.tmp" && mv "$TABLES_LIST.tmp" "$TABLES_LIST"
-echo "" >> "$TABLES_LIST"
 TABLES=`cat "$TABLES_LIST"`
+JSON="$TARGETDIR/database.json"
+echo "{" > "$JSON"
 while read TAB; do
-    echo "   - table: ${TAB}"
+    SQL2="
+    USE $DB;
+    SHOW CREATE TABLE $TAB;"
+    SQL3="
+    USE $DB;
+    EXPLAIN $TAB;"
+    mysql -u$USER -p$PASS -D$DB -e "$SQL2" > "$TARGETDIR/$TAB.sql"
+    mysql -u$USER -p$PASS -D$DB -e "$SQL3" > "$TARGETDIR/$TAB.explain"
+    # remove 'columns headers'
+    tail -n +2 "$TARGETDIR/$TAB.sql" > "$TARGETDIR/$TAB.sql.tmp" && mv "$TARGETDIR/$TAB.sql.tmp" "$TARGETDIR/$TAB.sql"
+    # remove 'prefix'
+    REPLACE="$TAB	CREATE TABLE"
+    TO='CREATE TABLE'
+    sed -i "s/$REPLACE/$TO/g" "$TARGETDIR/$TAB.sql"
+    # md5
+    md5sum "$TARGETDIR/$TAB.sql" > "$TARGETDIR/$TAB.md5"
+    md5sum "$TARGETDIR/$TAB.explain" > "$TARGETDIR/$TAB.explain.md5"
+    MD5=`cat $TARGETDIR/$TAB.md5 | cut -d ' ' -f 1`
+    MD5EXPL=`cat $TARGETDIR/$TAB.explain.md5 | cut -d ' ' -f 1`
+    echo "   - md5: ${MD5} explain: ${MD5EXPL} table: ${TAB} "
+
+
 done < "$TABLES_LIST"
+
+
+echo "  \"_meta\": {"                  >> "$JSON"
+echo "      \"generated\": \"$DATE\"," >> "$JSON"
+echo "      \"database\": \"$DB\","    >> "$JSON"
+echo "      \"hostnamed\": \"$HOST\"   >> "$JSON"
+echo "  }"                             >> "$JSON"
+echo "}" > "$TARGETDIR/database.json"  >> "$JSON"
