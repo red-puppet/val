@@ -1,0 +1,18 @@
+{
+  "name": "validator-example",
+  "version": "1.0.0",
+  "description": "multi-field validations using valdi",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "values",
+    "validation"
+  ],
+  "author": "MS",
+  "license": "MIT",
+  "dependencies": {
+    "valdi": "0.0.374"
+  }
+}
