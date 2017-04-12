@@ -2,23 +2,19 @@
 
 var _id = 0,
     _singleton = false,
-    valdi = require('valdi');
+    Valdi = require('valdi'),
+    simple = Valdi.simple;
 
 function PairsValidator() {
 
     this.id = ++_id;
     this.mapping = {};
-    this.predef = {
-        nonEmptyString = valdi.new('Non-empty string').string().lengthMin(2)
-    };
+    this.nonEmpty = simple.new('Non-empty string').string().lengthMin(2);
 
     this.setMapping = function(ob) {
-        foreach (var k in ob) {
+        for (var k in ob) {
             var _arr = this.arrayify(ob[k]);
-            this.mapping[k] = valdi
-                .new('value of \'' + k + '\' is mapped to [' + _arr.join(', ') + ']')
-                .string()
-                .inList(_arr);
+            this.mapping[k] = simple.new('value of \'' + k + '\' is mapped to [' + _arr.join(', ') + ']').string().inList(_arr);
         }
     };
 
@@ -26,7 +22,8 @@ function PairsValidator() {
         var match = {
             string: true,
             number: true
-        }
+        };
+
         if (match[typeof value]) {
             return [value];
         } else {
@@ -35,23 +32,31 @@ function PairsValidator() {
     };
 
     this.check = function(val1, val2) {
-        if (typeof this.mapping[val1]) {
-            return this.mapping[val1].valid(val2);       // this is NET
-        } else {
-            return this.predef,nonEmptyString,valid(val2); // implementation
-        }
-    }
-};
+
+        //console.log('-----------------------------');
+        //console.log('value');
+        //console.log(val1);
+        //console.log('linked');
+        //console.log(val2);
+        //console.log('mapping');
+        var _check = (!this.mapping[val1]) ? this.nonEmpty : this.mapping[val1];
+        //console.log(_check);
+        //console.log('value returned');
+        //console.log(_check.value(val2));
+        return _check.value(val2);
+    };
+}
 
 
 function _pairsValidator(mapping) {
     if (_singleton === false) {
-        _singleton = new MultiValidator();
+        _singleton = new PairsValidator();
     }
-    _singleton.setMapping(mapping)
+    _singleton.setMapping(mapping);
     return _singleton;
 }
 
-module.exports = function jacin(value, linked, mapping) {
-    return new _pairsValidator(mapping).check(value, linked);
+module.exports = function (value, linked, mapping) {
+    var _val = _pairsValidator(mapping);
+    return _val.check(value, linked);
 };
