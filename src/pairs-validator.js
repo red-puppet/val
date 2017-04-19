@@ -39,7 +39,11 @@ function PairsValidator() {
         //console.log('linked');
         //console.log(val2);
         //console.log('mapping');
-        var _check = (!this.mapping[val1]) ? this.nonEmpty : this.mapping[val1];
+        if (typeof this.mapping[val1] !== 'object') {
+            return simple.new('Non-empty string').string().lengthMin(2).value(val2);
+        } else {
+            return this.mapping[val1].value(val2);
+        }
         //console.log(_check);
         //console.log('value returned');
         //console.log(_check.value(val2));
